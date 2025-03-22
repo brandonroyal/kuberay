@@ -71,6 +71,8 @@ type SubmitJobOptions struct {
 	workerReplicas     int32
 	noWait             bool
 	dryRun             bool
+	headNodeSelectors  map[string]string
+	workerNodeSelectors map[string]string
 }
 
 var (
@@ -163,6 +165,8 @@ func NewJobSubmitCommand(streams genericclioptions.IOStreams) *cobra.Command {
 	cmd.Flags().StringVar(&options.workerMemory, "worker-memory", "4Gi", "amount of memory in each worker group replica")
 	cmd.Flags().StringVar(&options.workerGPU, "worker-gpu", "0", "number of GPUs in each worker group replica")
 	cmd.Flags().BoolVar(&options.dryRun, "dry-run", false, "print the generated YAML instead of creating the cluster. Only works when filename is not provided")
+	cmd.Flags().StringToStringVar(&options.headNodeSelectors, "head-node-selector", nil, "Node selectors to apply to all head pods in the cluster (e.g. --head-node-selector=cloud.google.com/gke-accelerator=nvidia-l4,cloud.google.com/gke-nodepool=my-node-pool)")
+	cmd.Flags().StringToStringVar(&options.workerNodeSelectors, "worker-node-selector", nil, "Node selectors to apply to all worker pods in the cluster (e.g. --worker-node-selector=cloud.google.com/gke-accelerator=nvidia-l4,cloud.google.com/gke-nodepool=my-node-pool)")
 
 	options.configFlags.AddFlags(cmd.Flags())
 	return cmd
@@ -297,6 +301,8 @@ func (options *SubmitJobOptions) Run(ctx context.Context, factory cmdutil.Factor
 				WorkerMemory:   options.workerMemory,
 				WorkerGPU:      options.workerGPU,
 				WorkerReplicas: options.workerReplicas,
+				HeadNodeSelectors: options.headNodeSelectors,
+				WorkerNodeSelectors: options.workerNodeSelectors,
 			},
 		}
 		rayJobApplyConfig := rayJobObject.GenerateRayJobApplyConfig()
